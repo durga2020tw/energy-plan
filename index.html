@@ -220,6 +220,41 @@
       100% { transform: scale(1); }
     }
     .popping { animation: pop 0.25s ease; }
+
+    /* ── 回顧頁面 ── */
+    .review-chart-row {
+      display: flex; align-items: flex-end;
+      gap: 6px; padding: 8px 0 12px;
+    }
+    .review-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .review-bar-bg {
+      width: 100%; background: #f0e4d0;
+      border-radius: 8px; height: 80px;
+      display: flex; align-items: flex-end; overflow: hidden;
+    }
+    .review-bar-fill { width: 100%; border-radius: 8px; transition: height 0.5s ease; }
+    .review-bar-date { font-size: 11px; color: var(--muted); text-align: center; }
+    .review-bar-val  { font-size: 13px; font-weight: 700; color: var(--brown-mid); }
+
+    .review-day-card {
+      background: #fff; border: 1.5px solid var(--border);
+      border-radius: 16px; padding: 16px 18px; margin-bottom: 10px;
+    }
+    .review-day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .review-day-date  { font-size: 16px; font-weight: 700; color: var(--brown-dark); }
+    .review-energy-badge { font-size: 15px; font-weight: 700; padding: 4px 14px; border-radius: 20px; }
+    .review-tasks-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .review-task-chip { font-size: 13px; padding: 3px 10px; border-radius: 12px; display: flex; align-items: center; gap: 4px; }
+    .review-task-chip.done   { background: #fdf0d8; color: #9a6a30; }
+    .review-task-chip.undone { background: #f3f3f3; color: #b0b0b0; text-decoration: line-through; }
+    .review-notes { font-size: 15px; color: #7a5c3e; line-height: 1.7; }
+    .review-note-item { margin-bottom: 6px; padding-left: 10px; border-left: 3px solid var(--gold); }
+    .review-rest-tag {
+      display: inline-block; background: #fef9ec;
+      border: 1px solid var(--gold); color: #9a7a30;
+      font-size: 13px; border-radius: 12px; padding: 3px 12px; margin-bottom: 8px;
+    }
+    .review-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 16px; line-height: 1.8; }
   </style>
 </head>
 <body>
@@ -267,6 +302,15 @@
     <div id="weekly-tasks"></div>
   </div>
 
+  <!-- 回顧面板 -->
+  <div class="panel" id="panel-review">
+    <div class="card">
+      <div class="card-label">📅 最近 14 天能量回顧</div>
+      <div id="review-chart"></div>
+    </div>
+    <div id="review-list"></div>
+  </div>
+
 </div>
 
 <!-- ✅ 底部導覽列 -->
@@ -279,6 +323,11 @@
   <button class="nav-btn" id="nav-weekly" onclick="switchTab('weekly')">
     <span class="nav-icon">🌿</span>
     <span>深度回充</span>
+    <div class="nav-indicator"></div>
+  </button>
+  <button class="nav-btn" id="nav-review" onclick="switchTab('review')">
+    <span class="nav-icon">📊</span>
+    <span>回顧</span>
     <div class="nav-indicator"></div>
   </button>
 </nav>
@@ -552,11 +601,116 @@ function updateWeeklyNote(key, val) {
 }
 
 function switchTab(tab) {
-  ["daily","weekly"].forEach(t => {
+  ["daily","weekly","review"].forEach(t => {
     document.getElementById("panel-" + t).classList.toggle("active", t === tab);
     document.getElementById("nav-"   + t).classList.toggle("active", t === tab);
   });
+  if (tab === "review") renderReview();
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ── 回顧頁面 ──
+const ENERGY_COLORS = {
+  1: { bg:"#fee2e2", text:"#ef4444", label:"⚡ 耗盡" },
+  2: { bg:"#ffedd5", text:"#f97316", label:"🌧️ 低迷" },
+  3: { bg:"#fef9c3", text:"#ca8a04", label:"🌤️ 平穩" },
+  4: { bg:"#dcfce7", text:"#16a34a", label:"☀️ 充電中" },
+  5: { bg:"#d1fae5", text:"#059669", label:"✨ 滿載" },
+};
+
+function getLast14Days() {
+  const days = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push(d.toISOString().split("T")[0]);
+  }
+  return days;
+}
+
+function loadDayFromLocal(dateKey) {
+  try {
+    const raw = localStorage.getItem("energy_" + dateKey);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function renderReview() {
+  const days = getLast14Days();
+  const container = document.getElementById("review-chart");
+  const listContainer = document.getElementById("review-list");
+
+  // ── 長條圖 ──
+  const barRow = document.createElement("div");
+  barRow.className = "review-chart-row";
+  days.forEach(dateKey => {
+    const data = loadDayFromLocal(dateKey);
+    const energy = data ? (Number(data.energy) || 0) : 0;
+    const col = ENERGY_COLORS[energy];
+    const fillH = energy ? (energy / 5) * 100 : 0;
+    const shortDate = dateKey.slice(5); // MM-DD
+    const isToday = dateKey === today;
+
+    const wrap = document.createElement("div");
+    wrap.className = "review-bar-wrap";
+    wrap.innerHTML = `
+      <div class="review-bar-val" style="color:${col ? col.text : "#ddd"}">${energy || "-"}</div>
+      <div class="review-bar-bg">
+        <div class="review-bar-fill" style="
+          height:${fillH}%;
+          background:${col ? col.bg : "transparent"};
+          border:2px solid ${col ? col.text + "44" : "transparent"};
+        "></div>
+      </div>
+      <div class="review-bar-date" style="font-weight:${isToday ? 700 : 400}; color:${isToday ? "var(--brown-dark)" : ""}">${isToday ? "今天" : shortDate.replace("-","/")}</div>
+    `;
+    barRow.appendChild(wrap);
+  });
+  container.innerHTML = "";
+  container.appendChild(barRow);
+
+  // ── 逐日卡片（只顯示有記錄的天） ──
+  listContainer.innerHTML = "";
+  const recorded = days.filter(d => loadDayFromLocal(d)).reverse(); // 最新在前
+
+  if (recorded.length === 0) {
+    listContainer.innerHTML = `<div class="review-empty">📭 還沒有記錄<br>每天完成任務後就會出現在這裡</div>`;
+    return;
+  }
+
+  recorded.forEach(dateKey => {
+    const data = loadDayFromLocal(dateKey);
+    if (!data) return;
+    const energy = Number(data.energy) || 0;
+    const col = ENERGY_COLORS[energy] || { bg:"#f3f3f3", text:"#aaa", label:"-" };
+    const tasks = data.dailyTasks || {};
+
+    const card = document.createElement("div");
+    card.className = "review-day-card";
+
+    // 任務chips
+    const taskChips = DAILY_TASKS.map(t => {
+      const done = tasks[t.id]?.done;
+      return `<span class="review-task-chip ${done ? "done" : "undone"}">${t.emoji} ${t.category}</span>`;
+    }).join("");
+
+    // 筆記
+    const notes = DAILY_TASKS
+      .filter(t => tasks[t.id]?.note)
+      .map(t => `<div class="review-note-item">${t.emoji} <strong>${t.category}：</strong>${tasks[t.id].note}</div>`)
+      .join("");
+
+    card.innerHTML = `
+      <div class="review-day-header">
+        <div class="review-day-date">${dateKey === today ? "今天 · " : ""}${dateKey}</div>
+        <div class="review-energy-badge" style="background:${col.bg}; color:${col.text}">${col.label}</div>
+      </div>
+      ${data.restToday ? `<div class="review-rest-tag">🛌 今天休息了${data.restNote ? "：" + data.restNote : ""}</div>` : ""}
+      <div class="review-tasks-row">${taskChips}</div>
+      ${notes ? `<div class="review-notes">${notes}</div>` : ""}
+    `;
+    listContainer.appendChild(card);
+  });
 }
 
 (async () => {
