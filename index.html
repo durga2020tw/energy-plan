@@ -60,13 +60,13 @@
       content:''; position:absolute; top:-20px; right:-20px;
       width:120px; height:120px; border-radius:50%; background:#c9a96e22;
     }
-    .header h1 { color: var(--cream); font-size: 18px; font-weight: 700; letter-spacing: 2px; }
-    .header p  { color: #d4b896; font-size: 12px; margin-top: 2px; }
+    .header h1 { color: var(--cream); font-size: 22px; font-weight: 700; letter-spacing: 2px; }
+    .header p  { color: #d4b896; font-size: 14px; margin-top: 2px; }
 
     #save-status {
-      text-align: center; font-size: 12px;
+      text-align: center; font-size: 13px;
       padding: 5px 16px; color: var(--muted);
-      min-height: 22px; transition: opacity 0.4s;
+      min-height: 24px; transition: opacity 0.4s;
       background: var(--cream);
     }
 
@@ -75,18 +75,18 @@
     /* 卡片 */
     .card {
       background: #fff; border-radius: 18px;
-      padding: 18px; margin: 12px 0;
+      padding: 20px; margin: 12px 0;
       box-shadow: 0 2px 10px #d4b89618;
     }
-    .card-label { font-size: 14px; color: var(--brown-mid); font-weight: 700; margin-bottom: 12px; }
+    .card-label { font-size: 16px; color: var(--brown-mid); font-weight: 700; margin-bottom: 14px; }
 
     /* 能量按鈕（✅ min-height 44px） */
     .energy-btns { display: flex; gap: 6px; flex-wrap: wrap; }
     .energy-btn {
-      flex: 1; min-width: 80px; min-height: 44px;
-      border-radius: 22px; border: 2px solid transparent;
+      flex: 1; min-width: 80px; min-height: 48px;
+      border-radius: 24px; border: 2px solid transparent;
       background: #f5f0eb; color: #9ca3af;
-      font-family: 'Noto Serif TC', serif; font-size: 13px;
+      font-family: 'Noto Serif TC', serif; font-size: 15px;
       cursor: pointer; transition: all 0.2s;
       display: flex; align-items: center; justify-content: center;
     }
@@ -95,8 +95,8 @@
     .low-energy-msg {
       display: none; margin-top: 12px;
       background: #fff7ed; border-radius: 12px;
-      padding: 12px 14px; font-size: 13px; color: #c2410c;
-      border: 1px solid #fed7aa; line-height: 1.6;
+      padding: 12px 14px; font-size: 15px; color: #c2410c;
+      border: 1px solid #fed7aa; line-height: 1.7;
     }
 
     /* 休息開關 */
@@ -108,8 +108,8 @@
       transition: all 0.3s;
     }
     .rest-card.active { background: #fef9ec; border-color: var(--gold); }
-    .rest-card .rest-text h3 { font-size: 15px; font-weight: 700; color: var(--brown-mid); }
-    .rest-card .rest-text p  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .rest-card .rest-text h3 { font-size: 17px; font-weight: 700; color: var(--brown-mid); }
+    .rest-card .rest-text p  { font-size: 15px; color: var(--muted); margin-top: 2px; }
     #rest-note-input {
       display: none; margin-top: 10px; width: 100%;
       border: 1px solid var(--gold); border-radius: 10px;
@@ -145,15 +145,15 @@
     .task-inner   { display: flex; align-items: flex-start; gap: 12px; }
     .task-content { flex: 1; min-width: 0; }
     .task-meta    { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; flex-wrap: wrap; }
-    .task-time    { font-size: 12px; color: #b5a08a; }
-    .task-badge   { font-size: 12px; background: #f0e4d0; color: #9a7a52; border-radius: 10px; padding: 2px 10px; }
+    .task-time    { font-size: 13px; color: #b5a08a; }
+    .task-badge   { font-size: 13px; background: #f0e4d0; color: #9a7a52; border-radius: 10px; padding: 3px 12px; }
     .task-badge.green { background: #dcfce7; color: #16a34a; }
-    .task-title   { font-size: 15px; color: var(--text); font-weight: 700; margin-bottom: 4px; line-height: 1.5; }
-    .task-hint    { font-size: 13px; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+    .task-title   { font-size: 17px; color: var(--text); font-weight: 700; margin-bottom: 6px; line-height: 1.6; }
+    .task-hint    { font-size: 15px; color: var(--muted); margin-bottom: 12px; line-height: 1.7; }
 
-    .task-prompts { background: #f0fdf4; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
-    .task-prompts-label { font-size: 12px; color: #6a9a7a; margin-bottom: 6px; }
-    .task-prompts p { font-size: 13px; color: #2d6a4a; margin-bottom: 3px; line-height: 1.6; }
+    .task-prompts { background: #f0fdf4; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+    .task-prompts-label { font-size: 13px; color: #6a9a7a; margin-bottom: 8px; }
+    .task-prompts p { font-size: 15px; color: #2d6a4a; margin-bottom: 5px; line-height: 1.7; }
 
     /* ✅ font-size 16px 防 iOS textarea 自動縮放；resize:none 避免手機誤觸 */
     textarea.note-input {
@@ -175,7 +175,7 @@
       background: linear-gradient(90deg, var(--brown-light), var(--gold));
       height: 100%; border-radius: 8px; width: 0%; transition: width 0.5s;
     }
-    .progress-label { font-size: 12px; color: var(--muted); margin-top: 4px; text-align: right; }
+    .progress-label { font-size: 14px; color: var(--muted); margin-top: 4px; text-align: right; }
 
     /* ✅ 底部固定導覽列（取代頁面中間的 tab） */
     .bottom-nav {
@@ -190,12 +190,12 @@
       flex: 1; padding: 10px 8px;
       border: none; background: transparent; color: var(--muted);
       font-family: 'Noto Serif TC', serif;
-      font-size: 12px; font-weight: 600; cursor: pointer;
+      font-size: 14px; font-weight: 600; cursor: pointer;
       display: flex; flex-direction: column; align-items: center; gap: 3px;
       transition: all 0.2s;
       -webkit-tap-highlight-color: transparent;
     }
-    .nav-btn .nav-icon { font-size: 22px; line-height: 1; }
+    .nav-btn .nav-icon { font-size: 24px; line-height: 1; }
     .nav-btn.active    { color: var(--brown-dark); }
     .nav-indicator {
       width: 28px; height: 3px; border-radius: 2px;
@@ -210,8 +210,8 @@
       background: var(--brown-dark); border-radius: 18px;
       padding: 18px; margin-top: 8px; color: var(--cream);
     }
-    .footer-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
-    .footer-card p  { font-size: 13px; line-height: 1.8; color: #d4b896; }
+    .footer-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .footer-card p  { font-size: 15px; line-height: 1.9; color: #d4b896; }
     .footer-card strong { color: var(--gold); }
 
     @keyframes pop {
