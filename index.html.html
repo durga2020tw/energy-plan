@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <!-- ✅ 移除 maximum-scale 限制，讓使用者可自由縮放 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>情緒能量補充計畫 🌱</title>
+
+  <!-- PWA：加到主畫面後顯示為 App -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="能量計畫" />
+  <meta name="theme-color" content="#5a3e2b" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- =====================================================
+    📌 把你的 Apps Script 網址貼在這裡
+  ====================================================== -->
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxzqRMSgF86IK2W-0tuGT9a_AsZ532NnrbxyU0krPJYWsywKKKwltXfyXI5bpcpyXP/exec";
+  </script>
+
+  <style>
+    :root {
+      --brown-dark:  #5a3e2b;
+      --brown-mid:   #7a5c3e;
+      --brown-light: #c9a96e;
+      --gold:        #f0c97a;
+      --cream:       #fdf6ec;
+      --bg:          #f5ece0;
+      --border:      #e8e0d5;
+      --text:        #3d2c1e;
+      --muted:       #a08060;
+      --safe-top:    env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
+
+    body {
+      font-family: 'Noto Serif TC', serif;
+      background: var(--bg);
+      min-height: 100%;
+      padding-bottom: calc(72px + var(--safe-bottom));
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Header（含頂部安全區） */
+    .header {
+      background: linear-gradient(180deg, var(--brown-dark) 0%, var(--brown-mid) 100%);
+      padding: calc(16px + var(--safe-top)) 20px 16px;
+      text-align: center;
+      position: sticky; top: 0; z-index: 10;
+      overflow: hidden;
+    }
+    .header::before {
+      content:''; position:absolute; top:-20px; right:-20px;
+      width:120px; height:120px; border-radius:50%; background:#c9a96e22;
+    }
+    .header h1 { color: var(--cream); font-size: 18px; font-weight: 700; letter-spacing: 2px; }
+    .header p  { color: #d4b896; font-size: 12px; margin-top: 2px; }
+
+    #save-status {
+      text-align: center; font-size: 12px;
+      padding: 5px 16px; color: var(--muted);
+      min-height: 22px; transition: opacity 0.4s;
+      background: var(--cream);
+    }
+
+    .container { max-width: 600px; margin: 0 auto; padding: 0 14px; }
+
+    /* 卡片 */
+    .card {
+      background: #fff; border-radius: 18px;
+      padding: 18px; margin: 12px 0;
+      box-shadow: 0 2px 10px #d4b89618;
+    }
+    .card-label { font-size: 14px; color: var(--brown-mid); font-weight: 700; margin-bottom: 12px; }
+
+    /* 能量按鈕（✅ min-height 44px） */
+    .energy-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .energy-btn {
+      flex: 1; min-width: 80px; min-height: 44px;
+      border-radius: 22px; border: 2px solid transparent;
+      background: #f5f0eb; color: #9ca3af;
+      font-family: 'Noto Serif TC', serif; font-size: 13px;
+      cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .energy-btn.active { font-weight: 700; }
+
+    .low-energy-msg {
+      display: none; margin-top: 12px;
+      background: #fff7ed; border-radius: 12px;
+      padding: 12px 14px; font-size: 13px; color: #c2410c;
+      border: 1px solid #fed7aa; line-height: 1.6;
+    }
+
+    /* 休息開關 */
+    .rest-card {
+      background: #fff; border: 1.5px solid var(--border);
+      border-radius: 18px; padding: 16px 18px;
+      margin-bottom: 12px;
+      display: flex; align-items: flex-start; gap: 14px;
+      transition: all 0.3s;
+    }
+    .rest-card.active { background: #fef9ec; border-color: var(--gold); }
+    .rest-card .rest-text h3 { font-size: 15px; font-weight: 700; color: var(--brown-mid); }
+    .rest-card .rest-text p  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    #rest-note-input {
+      display: none; margin-top: 10px; width: 100%;
+      border: 1px solid var(--gold); border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 16px; /* ✅ 16px 防 iOS 自動縮放 */
+      font-family: 'Noto Serif TC', serif;
+      background: #fffdf8; color: var(--brown-dark); outline: none;
+    }
+
+    /* 圓形按鈕（✅ 44px） */
+    .circle-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%; border: 2px solid var(--brown-light);
+      background: transparent; color: #fff; font-size: 18px;
+      cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.25s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .circle-btn.done        { background: var(--brown-light); border-color: var(--brown-light); }
+    .circle-btn.done-green  { background: #22c55e; border-color: #22c55e; }
+    .circle-btn.border-green { border-color: #86efac; }
+
+    /* 任務卡片 */
+    .task-card {
+      background: #fff; border: 1.5px solid var(--border);
+      border-radius: 18px; padding: 16px;
+      margin-bottom: 10px; transition: all 0.3s;
+    }
+    .task-card.done         { background: #fdf6ec; border-color: var(--gold); }
+    .task-card.done-weekly  { background: #f0fdf4; border-color: #86efac; }
+
+    .task-inner   { display: flex; align-items: flex-start; gap: 12px; }
+    .task-content { flex: 1; min-width: 0; }
+    .task-meta    { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; flex-wrap: wrap; }
+    .task-time    { font-size: 12px; color: #b5a08a; }
+    .task-badge   { font-size: 12px; background: #f0e4d0; color: #9a7a52; border-radius: 10px; padding: 2px 10px; }
+    .task-badge.green { background: #dcfce7; color: #16a34a; }
+    .task-title   { font-size: 15px; color: var(--text); font-weight: 700; margin-bottom: 4px; line-height: 1.5; }
+    .task-hint    { font-size: 13px; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+
+    .task-prompts { background: #f0fdf4; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; }
+    .task-prompts-label { font-size: 12px; color: #6a9a7a; margin-bottom: 6px; }
+    .task-prompts p { font-size: 13px; color: #2d6a4a; margin-bottom: 3px; line-height: 1.6; }
+
+    /* ✅ font-size 16px 防 iOS textarea 自動縮放；resize:none 避免手機誤觸 */
+    textarea.note-input {
+      width: 100%; min-height: 60px;
+      border: 1px solid #e8d8c0; border-radius: 10px;
+      padding: 10px 12px;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 16px;
+      color: var(--brown-dark); background: #fffdf8;
+      resize: none; outline: none;
+      line-height: 1.6; overflow: hidden;
+    }
+    textarea.note-input.green { border-color: #bbf7d0; background: #f9fefb; color: #1a3a2a; }
+
+    /* 進度條 */
+    .progress-wrap { margin-bottom: 12px; }
+    .progress-bar  { background: #e8d8c0; border-radius: 8px; height: 8px; overflow: hidden; }
+    .progress-fill {
+      background: linear-gradient(90deg, var(--brown-light), var(--gold));
+      height: 100%; border-radius: 8px; width: 0%; transition: width 0.5s;
+    }
+    .progress-label { font-size: 12px; color: var(--muted); margin-top: 4px; text-align: right; }
+
+    /* ✅ 底部固定導覽列（取代頁面中間的 tab） */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #fff; border-top: 1px solid var(--border);
+      display: flex;
+      padding-bottom: var(--safe-bottom);
+      z-index: 100;
+      box-shadow: 0 -2px 12px #d4b89622;
+    }
+    .nav-btn {
+      flex: 1; padding: 10px 8px;
+      border: none; background: transparent; color: var(--muted);
+      font-family: 'Noto Serif TC', serif;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .nav-btn .nav-icon { font-size: 22px; line-height: 1; }
+    .nav-btn.active    { color: var(--brown-dark); }
+    .nav-indicator {
+      width: 28px; height: 3px; border-radius: 2px;
+      background: transparent; transition: background 0.2s;
+    }
+    .nav-btn.active .nav-indicator { background: var(--brown-light); }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .footer-card {
+      background: var(--brown-dark); border-radius: 18px;
+      padding: 18px; margin-top: 8px; color: var(--cream);
+    }
+    .footer-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .footer-card p  { font-size: 13px; line-height: 1.8; color: #d4b896; }
+    .footer-card strong { color: var(--gold); }
+
+    @keyframes pop {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    .popping { animation: pop 0.25s ease; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌱 情緒能量補充計畫</h1>
+  <p id="today-date"></p>
+</div>
+<div id="save-status"></div>
+
+<div class="container">
+
+  <div class="card">
+    <div class="card-label">🌡️ 今日能量狀態</div>
+    <div class="energy-btns" id="energy-btns"></div>
+    <div class="low-energy-msg" id="low-energy-msg">
+      💛 能量很低的日子，允許自己只做一件事，或什麼都不做。休息本身就是成就。
+    </div>
+  </div>
+
+  <div class="rest-card" id="rest-card">
+    <button class="circle-btn" id="rest-btn" onclick="toggleRest()"></button>
+    <div class="rest-text" style="flex:1">
+      <h3>🛌 今天允許自己休息</h3>
+      <p>這本身就是一項偉大的成就</p>
+      <input id="rest-note-input" type="text" placeholder="今天休息的方式……" oninput="scheduleSave()" />
+    </div>
+  </div>
+
+  <!-- 每日任務面板 -->
+  <div class="panel active" id="panel-daily">
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-label" id="progress-label">還有 5 項待完成</div>
+    </div>
+    <div id="daily-tasks"></div>
+    <div class="footer-card">
+      <h3>💬 給自己的提醒</h3>
+      <p>這份計畫的目標不是讓你變得「更會撐」，而是讓你找回<strong>內在信念</strong>——你值得被尊重，且有權利選擇更健康的工作方式。</p>
+    </div>
+  </div>
+
+  <!-- 深度回充面板 -->
+  <div class="panel" id="panel-weekly">
+    <div id="weekly-tasks"></div>
+  </div>
+
+</div>
+
+<!-- ✅ 底部導覽列 -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-daily" onclick="switchTab('daily')">
+    <span class="nav-icon">📋</span>
+    <span id="nav-daily-label">每日任務</span>
+    <div class="nav-indicator"></div>
+  </button>
+  <button class="nav-btn" id="nav-weekly" onclick="switchTab('weekly')">
+    <span class="nav-icon">🌿</span>
+    <span>深度回充</span>
+    <div class="nav-indicator"></div>
+  </button>
+</nav>
+
+<script>
+const DAILY_TASKS = [
+  { id:"body",        time:"晨間／隨時", category:"身體感官覺察", emoji:"🫁",
+    content:"覺察胃部是否緊縮、有無焦慮感",
+    action:"若有，進行 3 分鐘深呼吸或聽空靈鼓" },
+  { id:"boundary",    time:"工作期間",   category:"任務界線設定", emoji:"🛡️",
+    content:"今天是否守住了低功耗節奏？",
+    action:"拒絕非必要行政內耗，記錄一個你守住的界線" },
+  { id:"identity",    time:"下班／傍晚", category:"非工作認同",   emoji:"🌿",
+    content:"執行一件「與工作無關讓我覺得我是我自己」的小事",
+    action:"散步、泡澡、不看通訊軟體 10 分鐘……" },
+  { id:"achievement", time:"睡前反思",   category:"每日微型成就", emoji:"✨",
+    content:"記錄一件今天做得不錯的小事",
+    action:"忍住沒看前公司訊息、好好吃了午餐……" },
+  { id:"ritual",      time:"睡前反思",   category:"情緒清理儀式", emoji:"🧹",
+    content:"進行屬於你的清理方式",
+    action:"錄製語音日記、亂塗鴉、跟貓咪說話……" },
+];
+
+const WEEKLY_TASKS = [
+  { id:"letter",  freq:"每週一次",   emoji:"✉️",
+    title:"寫一封寄不出去的信",
+    desc:"對前老闆、同事或過去的自己，流出憤怒與委屈。不需要寄出，流出即清理。",
+    prompts:["我最想讓你知道的是……","我當時的感受是……","我現在選擇放下……"] },
+  { id:"ip",      freq:"每週一次",   emoji:"📚",
+    title:"教案資產化",
+    desc:"花 30 分鐘整理一份屬於自己的 IP 教案，建立「專業主體性」。",
+    prompts:["這週我想整理的主題是……","我在這個主題上的獨特觀點是……"] },
+  { id:"connect", freq:"每兩週一次", emoji:"🌏",
+    title:"外部連結對話",
+    desc:"與「非圈內人」（老朋友或家人）談話，跳出程式忍者的陰影圈。",
+    prompts:["我想聯絡的人是……","我想分享或聊的事是……"] },
+];
+
+const ENERGY_LEVELS = [
+  { v:1, label:"⚡ 耗盡",   color:"#ef4444" },
+  { v:2, label:"🌧️ 低迷",   color:"#f97316" },
+  { v:3, label:"🌤️ 平穩",   color:"#eab308" },
+  { v:4, label:"☀️ 充電中", color:"#84cc16" },
+  { v:5, label:"✨ 滿載",   color:"#22c55e" },
+];
+
+const today   = new Date().toISOString().split("T")[0];
+const weekKey = (() => {
+  const d = new Date(), day = d.getDay();
+  const diff = d.getDate() - day + (day===0 ? -6 : 1);
+  return new Date(d.setDate(diff)).toISOString().split("T")[0];
+})();
+
+let state = { energy:3, restToday:false, restNote:"", dailyTasks:{}, weeklyTasks:{} };
+document.getElementById("today-date").textContent = today;
+
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
+
+async function loadFromSheets() {
+  const configured = APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_URL_HERE";
+  if (!configured) {
+    const local = localStorage.getItem("energy_" + today);
+    if (local) Object.assign(state, JSON.parse(local));
+    const localW = localStorage.getItem("energy_weekly_" + weekKey);
+    if (localW) state.weeklyTasks = JSON.parse(localW);
+    return;
+  }
+  try {
+    showStatus("⏳ 載入中…");
+    const [daily, weekly] = await Promise.all([
+      fetch(`${APPS_SCRIPT_URL}?sheetName=daily_logs&key=${today}`).then(r=>r.json()),
+      fetch(`${APPS_SCRIPT_URL}?sheetName=weekly_logs&key=${weekKey}`).then(r=>r.json()),
+    ]);
+    if (!daily.notFound) {
+      state.energy    = Number(daily.energy) || 3;
+      state.restToday = daily.restToday === "TRUE" || daily.restToday === true;
+      state.restNote  = daily.restNote || "";
+      state.dailyTasks= daily.tasks || {};
+    }
+    if (!weekly.notFound) state.weeklyTasks = weekly.tasks || {};
+    showStatus("✅ 已同步");
+  } catch {
+    showStatus("⚠️ 離線模式，資料暫存本機");
+    const local = localStorage.getItem("energy_" + today);
+    if (local) Object.assign(state, JSON.parse(local));
+  }
+}
+
+let saveTimer = null;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToSheets, 1500);
+}
+
+async function saveToSheets() {
+  state.restNote = document.getElementById("rest-note-input").value;
+  localStorage.setItem("energy_" + today, JSON.stringify({
+    energy:state.energy, restToday:state.restToday,
+    restNote:state.restNote, dailyTasks:state.dailyTasks
+  }));
+  localStorage.setItem("energy_weekly_" + weekKey, JSON.stringify(state.weeklyTasks));
+  const configured = APPS_SCRIPT_URL && APPS_SCRIPT_URL !== "YOUR_APPS_SCRIPT_URL_HERE";
+  if (!configured) { showStatus("💾 已儲存（本機）"); return; }
+  try {
+    showStatus("⏳ 同步中…");
+    await Promise.all([
+      fetch(APPS_SCRIPT_URL, { method:"POST", body: JSON.stringify({
+        sheetName:"daily_logs", key:today,
+        energy:state.energy, restToday:state.restToday,
+        restNote:state.restNote, tasks:state.dailyTasks
+      })}),
+      fetch(APPS_SCRIPT_URL, { method:"POST", body: JSON.stringify({
+        sheetName:"weekly_logs", key:weekKey,
+        energy:"", restToday:"", restNote:"", tasks:state.weeklyTasks
+      })}),
+    ]);
+    showStatus("☁️ 已同步到 Google 試算表 ✓");
+  } catch { showStatus("⚠️ 同步失敗，資料已存本機"); }
+}
+
+function showStatus(msg) {
+  const el = document.getElementById("save-status");
+  el.textContent = msg; el.style.opacity = 1;
+  clearTimeout(el._hide);
+  el._hide = setTimeout(() => { el.style.opacity = 0; }, 3000);
+}
+
+function renderEnergy() {
+  const container = document.getElementById("energy-btns");
+  container.innerHTML = "";
+  ENERGY_LEVELS.forEach(l => {
+    const btn = document.createElement("button");
+    btn.className = "energy-btn" + (state.energy === l.v ? " active" : "");
+    btn.textContent = l.label;
+    if (state.energy === l.v) {
+      btn.style.border    = `2px solid ${l.color}`;
+      btn.style.background = l.color + "22";
+      btn.style.color      = l.color;
+    }
+    btn.onclick = () => { state.energy = l.v; renderEnergy(); scheduleSave(); };
+    container.appendChild(btn);
+  });
+  document.getElementById("low-energy-msg").style.display = state.energy <= 2 ? "block" : "none";
+}
+
+function renderRest() {
+  const card = document.getElementById("rest-card");
+  const btn  = document.getElementById("rest-btn");
+  const inp  = document.getElementById("rest-note-input");
+  if (state.restToday) {
+    card.classList.add("active");
+    btn.classList.add("done"); btn.textContent = "✓";
+    inp.style.display = "block";
+  } else {
+    card.classList.remove("active");
+    btn.classList.remove("done"); btn.textContent = "";
+    inp.style.display = "none";
+  }
+  inp.value = state.restNote || "";
+}
+
+function toggleRest() {
+  state.restToday = !state.restToday;
+  const btn = document.getElementById("rest-btn");
+  btn.classList.add("popping");
+  btn.addEventListener("animationend", () => btn.classList.remove("popping"), { once:true });
+  renderRest(); scheduleSave();
+}
+
+function renderDailyTasks() {
+  const container = document.getElementById("daily-tasks");
+  container.innerHTML = "";
+  DAILY_TASKS.forEach(task => {
+    const data = state.dailyTasks[task.id] || {};
+    const card = document.createElement("div");
+    card.className = "task-card" + (data.done ? " done" : "");
+    card.innerHTML = `
+      <div class="task-inner">
+        <button class="circle-btn ${data.done ? 'done' : ''}"
+          onclick="toggleDailyTask('${task.id}', this)">${data.done ? "✓" : ""}</button>
+        <div class="task-content">
+          <div class="task-meta">
+            <span>${task.emoji}</span>
+            <span class="task-time">${task.time}</span>
+            <span class="task-badge">${task.category}</span>
+          </div>
+          <div class="task-title">${task.content}</div>
+          <div class="task-hint">💡 ${task.action}</div>
+          <textarea class="note-input"
+            placeholder="今天的感受或記錄……（選填）"
+            oninput="updateDailyNote('${task.id}', this.value); autoResize(this)"
+          >${data.note || ""}</textarea>
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+  container.querySelectorAll("textarea").forEach(autoResize);
+  updateProgress();
+}
+
+function toggleDailyTask(id, btn) {
+  const data = state.dailyTasks[id] || {};
+  state.dailyTasks[id] = { ...data, done: !data.done };
+  btn.classList.add("popping");
+  btn.addEventListener("animationend", () => btn.classList.remove("popping"), { once:true });
+  renderDailyTasks(); scheduleSave();
+}
+
+function updateDailyNote(id, val) {
+  state.dailyTasks[id] = { ...(state.dailyTasks[id]||{}), note: val };
+  scheduleSave();
+}
+
+function updateProgress() {
+  const done  = DAILY_TASKS.filter(t => state.dailyTasks[t.id]?.done).length;
+  const total = DAILY_TASKS.length;
+  document.getElementById("progress-fill").style.width = `${(done/total)*100}%`;
+  document.getElementById("progress-label").textContent =
+    done === total ? "🎉 今日全部完成！" : `還有 ${total-done} 項待完成`;
+  document.getElementById("nav-daily-label").textContent = `每日 ${done}/${total}`;
+}
+
+function renderWeeklyTasks() {
+  const container = document.getElementById("weekly-tasks");
+  container.innerHTML = "";
+  WEEKLY_TASKS.forEach(task => {
+    const key  = `${weekKey}_${task.id}`;
+    const data = state.weeklyTasks[key] || {};
+    const card = document.createElement("div");
+    card.className = "task-card" + (data.done ? " done-weekly" : "");
+    card.innerHTML = `
+      <div class="task-inner">
+        <button class="circle-btn border-green ${data.done ? 'done-green' : ''}"
+          onclick="toggleWeeklyTask('${key}', this)">${data.done ? "✓" : ""}</button>
+        <div class="task-content">
+          <div class="task-meta">
+            <span>${task.emoji}</span>
+            <span class="task-badge green">${task.freq}</span>
+          </div>
+          <div class="task-title">${task.title}</div>
+          <div class="task-hint">${task.desc}</div>
+          <div class="task-prompts">
+            <div class="task-prompts-label">✍️ 引導提示</div>
+            ${task.prompts.map(p=>`<p>${p}</p>`).join("")}
+          </div>
+          <textarea class="note-input green"
+            placeholder="這週的執行紀錄……（選填）"
+            oninput="updateWeeklyNote('${key}', this.value); autoResize(this)"
+          >${data.note || ""}</textarea>
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+  container.querySelectorAll("textarea").forEach(autoResize);
+}
+
+function toggleWeeklyTask(key, btn) {
+  const data = state.weeklyTasks[key] || {};
+  state.weeklyTasks[key] = { ...data, done: !data.done };
+  btn.classList.add("popping");
+  btn.addEventListener("animationend", () => btn.classList.remove("popping"), { once:true });
+  renderWeeklyTasks(); scheduleSave();
+}
+
+function updateWeeklyNote(key, val) {
+  state.weeklyTasks[key] = { ...(state.weeklyTasks[key]||{}), note: val };
+  scheduleSave();
+}
+
+function switchTab(tab) {
+  ["daily","weekly"].forEach(t => {
+    document.getElementById("panel-" + t).classList.toggle("active", t === tab);
+    document.getElementById("nav-"   + t).classList.toggle("active", t === tab);
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+(async () => {
+  await loadFromSheets();
+  renderEnergy();
+  renderRest();
+  renderDailyTasks();
+  renderWeeklyTasks();
+})();
+</script>
+</body>
+</html>
